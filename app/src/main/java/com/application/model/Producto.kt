@@ -8,10 +8,10 @@ data class Producto(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val nombre: String,
-    val precioVenta: Double,
-    val costo: Double,
+    val descripcion: String,
+    val precio: Double,
     val stockActual: Int,
     val stockMinimo: Int,
     val categoria: String,
-    val sku: String? = null
+    val fechaCreacion: Long = System.currentTimeMillis()
 )
