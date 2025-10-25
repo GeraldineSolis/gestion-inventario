@@ -1,31 +1,16 @@
 package com.application.data.remote
 
 import com.application.data.remote.api.InventarioApiService
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
+import com.application.data.remote.mock.MockApiService
 
 object RetrofitClient {
-    private const val BASE_URL = "https://api.ejemplo.com/v1/"
+    private const val USE_MOCK = true
 
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+    val apiService: InventarioApiService by lazy {
+        if (USE_MOCK) {
+            MockApiService()
+        } else {
+            throw NotImplementedError("API real no configurada. Cambiar USE_MOCK a true o configurar Retrofit.")
+        }
     }
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
-
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    val apiService: InventarioApiService = retrofit.create(InventarioApiService::class.java)
 }
