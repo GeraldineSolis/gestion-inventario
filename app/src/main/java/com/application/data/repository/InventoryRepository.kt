@@ -2,18 +2,25 @@ package com.application.data.repository
 
 import com.application.data.dao.CompraDao
 import com.application.data.dao.ProductoDao
+import com.application.data.dao.VentaDao
 import com.application.data.remote.RetrofitClient
 import com.application.data.remote.dto.toDto
 import com.application.data.remote.dto.toEntity
 import com.application.model.Compra
 import com.application.model.Producto
+import com.application.model.Venta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import java.io.IOException
+
 class InventoryRepository(
     private val productoDao: ProductoDao,
+    private val ventaDao: VentaDao,
     private val compraDao: CompraDao
 ) {
 
@@ -61,15 +68,31 @@ class InventoryRepository(
                     response.body()?.data?.let { productoDto ->
                         productoDao.update(productoDto.toEntity())
                     }
+                    Resource.Success(localId)
+                } else {
+                    Resource.Error(
+                        message = "Producto guardado localmente, pero error en servidor: ${response.body()?.error}",
+                        data = localId
+                    )
                 }
+            } catch (e: IOException) {
+                Resource.Error(
+                    message = "Producto guardado localmente. Error de conexión: No se pudo conectar al servidor",
+                    data = localId
+                )
+            } catch (e: HttpException) {
+                Resource.Error(
+                    message = "Producto guardado localmente. Error HTTP ${e.code()}: ${e.message()}",
+                    data = localId
+                )
             } catch (e: Exception) {
-                // Marcar como pendiente de sincronización (opcional)
-                // En una implementación real, guardarías esto para sincronizar después
+                Resource.Error(
+                    message = "Producto guardado localmente. Error inesperado: ${e.message}",
+                    data = localId
+                )
             }
-
-            Resource.Success(localId)
         } catch (e: Exception) {
-            Resource.Error("Error al insertar producto: ${e.message}")
+            Resource.Error("Error crítico al guardar producto: ${e.message}")
         }
     }
 
@@ -78,14 +101,21 @@ class InventoryRepository(
             productoDao.update(producto)
 
             try {
-                apiService.updateProducto(producto.id, producto.toDto())
+                val response = apiService.updateProducto(producto.id, producto.toDto())
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error("Actualizado localmente, pero error en servidor: ${response.body()?.error}")
+                }
+            } catch (e: IOException) {
+                Resource.Error("Actualizado localmente. Error de conexión al servidor")
+            } catch (e: HttpException) {
+                Resource.Error("Actualizado localmente. Error HTTP ${e.code()}: ${e.message()}")
             } catch (e: Exception) {
-                // Marcar como pendiente de sincronización
+                Resource.Error("Actualizado localmente. Error inesperado: ${e.message}")
             }
-
-            Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error("Error al actualizar producto: ${e.message}")
+            Resource.Error("Error crítico al actualizar producto: ${e.message}")
         }
     }
 
@@ -94,14 +124,21 @@ class InventoryRepository(
             productoDao.delete(producto)
 
             try {
-                apiService.deleteProducto(producto.id)
+                val response = apiService.deleteProducto(producto.id)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error("Eliminado localmente, pero error en servidor: ${response.body()?.error}")
+                }
+            } catch (e: IOException) {
+                Resource.Error("Eliminado localmente. Error de conexión al servidor")
+            } catch (e: HttpException) {
+                Resource.Error("Eliminado localmente. Error HTTP ${e.code()}: ${e.message()}")
             } catch (e: Exception) {
-                // Marcar como pendiente de sincronización
+                Resource.Error("Eliminado localmente. Error inesperado: ${e.message}")
             }
-
-            Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error("Error al eliminar producto: ${e.message}")
+            Resource.Error("Error crítico al eliminar producto: ${e.message}")
         }
     }
 
@@ -120,8 +157,12 @@ class InventoryRepository(
             } else {
                 Resource.Error("Error al sincronizar: ${response.body()?.error}")
             }
+        } catch (e: IOException) {
+            Resource.Error("Error de conexión: No se pudo conectar al servidor")
+        } catch (e: HttpException) {
+            Resource.Error("Error HTTP ${e.code()}: ${e.message()}")
         } catch (e: Exception) {
-            Resource.Error("Error de conexión: ${e.message}")
+            Resource.Error("Error inesperado: ${e.message}")
         }
     }
 
@@ -141,9 +182,15 @@ class InventoryRepository(
                     val compras = comprasDto.map { it.toEntity() }
                     compras.forEach { compraDao.insert(it) }
                 }
+            } else {
+                emit(Resource.Error("Error del servidor: ${response.body()?.error}"))
             }
+        } catch (e: IOException) {
+            emit(Resource.Error("Error de conexión: No se pudo conectar al servidor"))
+        } catch (e: HttpException) {
+            emit(Resource.Error("Error HTTP ${e.code()}: ${e.message()}"))
         } catch (e: Exception) {
-            emit(Resource.Error("Error de red: ${e.message}"))
+            emit(Resource.Error("Error inesperado: ${e.message}"))
         }
     }.flowOn(Dispatchers.IO)
 
@@ -161,22 +208,54 @@ class InventoryRepository(
 
     suspend fun insertCompra(compra: Compra): Resource<Long> = withContext(Dispatchers.IO) {
         try {
-            val localId = compraDao.insert(compra)
-
-            try {
-                val response = apiService.createCompra(compra.toDto())
-                if (response.isSuccessful && response.body()?.success == true) {
-                    response.body()?.data?.let { compraDto ->
-                        compraDao.update(compraDto.toEntity())
-                    }
-                }
-            } catch (e: Exception) {
-                // Marcar para sincronización posterior
+            val producto = productoDao.getById(compra.productoId).first()
+            if (producto == null) {
+                return@withContext Resource.Error<Long>("Error: El producto no existe")
             }
 
-            Resource.Success(localId)
+            val localId = compraDao.insert(compra)
+            val compraConId = compra.copy(id = localId.toInt())
+
+            // ACTUALIZAR STOCK DEL PRODUCTO AUTOMÁTICAMENTE
+            val productoActualizado = producto.copy(
+                stockActual = producto.stockActual + compra.cantidad
+            )
+            productoDao.update(productoActualizado)
+
+            try {
+                val response = apiService.createCompra(compraConId.toDto())
+                if (response.isSuccessful && response.body()?.success == true) {
+                    response.body()?.data?.let { compraDto ->
+                        val compraServidor = compraDto.toEntity()
+                        if (compraServidor.id != localId.toInt()) {
+                            compraDao.update(compraServidor)
+                        }
+                    }
+                    Resource.Success(localId)
+                } else {
+                    Resource.Error(
+                        message = "Compra guardada y stock actualizado, pero error en servidor: ${response.body()?.error}",
+                        data = localId
+                    )
+                }
+            } catch (e: IOException) {
+                Resource.Error(
+                    message = "Compra guardada y stock actualizado. Error de conexión al servidor",
+                    data = localId
+                )
+            } catch (e: HttpException) {
+                Resource.Error(
+                    message = "Compra guardada y stock actualizado. Error HTTP ${e.code()}: ${e.message()}",
+                    data = localId
+                )
+            } catch (e: Exception) {
+                Resource.Error(
+                    message = "Compra guardada y stock actualizado. Error inesperado: ${e.message}",
+                    data = localId
+                )
+            }
         } catch (e: Exception) {
-            Resource.Error("Error al insertar compra: ${e.message}")
+            Resource.Error("Error crítico al guardar compra: ${e.message}")
         }
     }
 
@@ -185,14 +264,21 @@ class InventoryRepository(
             compraDao.update(compra)
 
             try {
-                apiService.updateCompra(compra.id, compra.toDto())
+                val response = apiService.updateCompra(compra.id, compra.toDto())
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error("Actualizada localmente, pero error en servidor: ${response.body()?.error}")
+                }
+            } catch (e: IOException) {
+                Resource.Error("Actualizada localmente. Error de conexión al servidor")
+            } catch (e: HttpException) {
+                Resource.Error("Actualizada localmente. Error HTTP ${e.code()}: ${e.message()}")
             } catch (e: Exception) {
-                // Marcar para sincronización
+                Resource.Error("Actualizada localmente. Error inesperado: ${e.message}")
             }
-
-            Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error("Error al actualizar compra: ${e.message}")
+            Resource.Error("Error crítico al actualizar compra: ${e.message}")
         }
     }
 
@@ -201,14 +287,21 @@ class InventoryRepository(
             compraDao.delete(compra)
 
             try {
-                apiService.deleteCompra(compra.id)
+                val response = apiService.deleteCompra(compra.id)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error("Eliminada localmente, pero error en servidor: ${response.body()?.error}")
+                }
+            } catch (e: IOException) {
+                Resource.Error("Eliminada localmente. Error de conexión al servidor")
+            } catch (e: HttpException) {
+                Resource.Error("Eliminada localmente. Error HTTP ${e.code()}: ${e.message()}")
             } catch (e: Exception) {
-                // Marcar para sincronización
+                Resource.Error("Eliminada localmente. Error inesperado: ${e.message}")
             }
-
-            Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error("Error al eliminar compra: ${e.message}")
+            Resource.Error("Error crítico al eliminar compra: ${e.message}")
         }
     }
 
@@ -224,8 +317,62 @@ class InventoryRepository(
             } else {
                 Resource.Error("Error al sincronizar: ${response.body()?.error}")
             }
+        } catch (e: IOException) {
+            Resource.Error("Error de conexión: No se pudo conectar al servidor")
+        } catch (e: HttpException) {
+            Resource.Error("Error HTTP ${e.code()}: ${e.message()}")
         } catch (e: Exception) {
-            Resource.Error("Error de conexión: ${e.message}")
+            Resource.Error("Error inesperado: ${e.message}")
         }
     }
+
+    // === OPERACIONES DE VENTAS CON VALIDACIÓN DE STOCK ===
+
+    suspend fun insertVenta(venta: Venta): Resource<Long> = withContext(Dispatchers.IO) {
+        try {
+            val producto = productoDao.getById(venta.productoId).first()
+            if (producto == null) {
+                return@withContext Resource.Error<Long>("Error: El producto no existe")
+            }
+
+            // VALIDAR que haya stock suficiente
+            if (producto.stockActual < venta.cantidad) {
+                return@withContext Resource.Error<Long>(
+                    "Stock insuficiente. Disponible: ${producto.stockActual}, Solicitado: ${venta.cantidad}"
+                )
+            }
+
+            // VALIDAR que la cantidad sea positiva
+            if (venta.cantidad <= 0) {
+                return@withContext Resource.Error<Long>("La cantidad debe ser mayor a 0")
+            }
+
+            val localId = ventaDao.insert(venta)
+
+            // ACTUALIZAR STOCK DEL PRODUCTO
+            val productoActualizado = producto.copy(
+                stockActual = producto.stockActual - venta.cantidad
+            )
+            productoDao.update(productoActualizado)
+
+            Resource.Success(localId)
+
+        } catch (e: Exception) {
+            Resource.Error("Error crítico al registrar venta: ${e.message}")
+        }
+    }
+
+    fun getAllVentas(): Flow<Resource<List<Venta>>> = flow {
+        emit(Resource.Loading())
+        ventaDao.getAll().collect { ventas ->
+            emit(Resource.Success(ventas))
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun getVentasByProducto(productoId: Int): Flow<List<Venta>> =
+        ventaDao.getByProducto(productoId)
+
+    fun getTotalVendido(): Flow<Double?> = ventaDao.getTotalVendido()
+
+    fun getVentasCount(): Flow<Int> = ventaDao.getCount()
 }

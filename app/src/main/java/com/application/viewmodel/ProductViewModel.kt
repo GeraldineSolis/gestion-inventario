@@ -33,7 +33,8 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         val database = AppDatabase.getDatabase(application)
         repository = InventoryRepository(
             productoDao = database.productoDao(),
-            compraDao = database.compraDao()
+            compraDao = database.compraDao(),
+            ventaDao = database.ventaDao()
         )
         loadProductos()
     }

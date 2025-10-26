@@ -4,18 +4,22 @@ import android.content.Context
 import androidx.room.*
 import com.application.data.dao.CompraDao
 import com.application.data.dao.ProductoDao
+import com.application.data.dao.VentaDao
 import com.application.model.Compra
 import com.application.model.Producto
+import com.application.model.Venta
 
 @Database(
-    entities = [Producto::class, Compra::class],
-    version = 1,
+    entities = [Producto::class, Compra::class, Venta::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun productoDao(): ProductoDao
     abstract fun compraDao(): CompraDao
+    abstract fun ventaDao(): VentaDao
+
 
     companion object {
         @Volatile
