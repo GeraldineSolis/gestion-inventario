@@ -30,4 +30,10 @@ interface ProductoDao {
 
     @Query("SELECT COUNT(*) FROM productos")
     fun getCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM productos WHERE stockActual <= stockMinimo")
+    fun getCountProductosBajoStock(): Flow<Int>
+
+    @Query("SELECT SUM(stockActual * precio) FROM productos")
+    fun getCostoTotalInventario(): Flow<Double?>
 }

@@ -375,4 +375,82 @@ class InventoryRepository(
     fun getTotalVendido(): Flow<Double?> = ventaDao.getTotalVendido()
 
     fun getVentasCount(): Flow<Int> = ventaDao.getCount()
+
+    // === FUNCIONES PARA DASHBOARD Y ESTADÍSTICAS ===
+
+    fun getCountProductosBajoStock(): Flow<Int> =
+        productoDao.getCountProductosBajoStock()
+
+    fun getCostoTotalInventario(): Flow<Double?> =
+        productoDao.getCostoTotalInventario()
+
+    fun getTotalIngresosPorVentas(): Flow<Double?> =
+        ventaDao.getTotalVendido()
+
+    fun getGananciaNeta(): Flow<Resource<Double>> = flow {
+        emit(Resource.Loading())
+
+        try {
+            // Obtener total gastado en compras
+            var totalGastado = 0.0
+            compraDao.getTotalGastado().collect { total ->
+                totalGastado = total ?: 0.0
+            }
+
+            // Obtener total de ingresos por ventas
+            var totalVendido = 0.0
+            ventaDao.getTotalVendido().collect { total ->
+                totalVendido = total ?: 0.0
+            }
+
+            // Calcular ganancia
+            val ganancia = totalVendido - totalGastado
+            emit(Resource.Success(ganancia))
+
+        } catch (e: Exception) {
+            emit(Resource.Error("Error al calcular ganancia: ${e.message}"))
+        }
+    }.flowOn(Dispatchers.IO)
+
+
+    // Obtiene estadísticas completas para el Dashboard
+
+    fun getEstadisticasDashboard(): Flow<Resource<DashboardStats>> = flow {
+        emit(Resource.Loading())
+
+        try {
+            var totalProductos = 0
+            var productosBajoStock = 0
+            var costoInventario = 0.0
+            var totalGastado = 0.0
+            var totalVendido = 0.0
+            var totalCompras = 0
+            var totalVentas = 0
+
+            // Recopilar todos los datos
+            productoDao.getCount().collect { totalProductos = it }
+            productoDao.getCountProductosBajoStock().collect { productosBajoStock = it }
+            productoDao.getCostoTotalInventario().collect { costoInventario = it ?: 0.0 }
+            compraDao.getTotalGastado().collect { totalGastado = it ?: 0.0 }
+            ventaDao.getTotalVendido().collect { totalVendido = it ?: 0.0 }
+            compraDao.getCount().collect { totalCompras = it }
+            ventaDao.getCount().collect { totalVentas = it }
+
+            val stats = DashboardStats(
+                totalProductos = totalProductos,
+                productosBajoStock = productosBajoStock,
+                costoTotalInventario = costoInventario,
+                totalGastadoCompras = totalGastado,
+                totalIngresosVentas = totalVendido,
+                gananciaNeta = totalVendido - totalGastado,
+                totalCompras = totalCompras,
+                totalVentas = totalVentas
+            )
+
+            emit(Resource.Success(stats))
+
+        } catch (e: Exception) {
+            emit(Resource.Error("Error al obtener estadísticas: ${e.message}"))
+        }
+    }.flowOn(Dispatchers.IO)
 }
