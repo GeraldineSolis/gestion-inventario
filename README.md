@@ -69,3 +69,11 @@ Se implementaron las funciones necesarias en `InventoryRepository.kt` y `Product
 Con toda la lógica de persistencia, red, sincronización y *Business Intelligence* completada por el Líder Técnico, el trabajo restante se centra en la integración final de la UI para cerrar el proyecto:
 
 * **Integración UI (Diseñador UI):** Consumir el `DashboardStats` y el estado de los ViewModels para construir las Tarjetas de Resumen en el `HomeScreen`, mostrando alertas de stock bajo y los resúmenes financieros calculados.
+
+---
+
+## 🎨 Diseño en Figma
+
+Puedes ver el diseño completo del proyecto aquí:
+
+👉 [Ver diseño en Figma](https://www.figma.com/make/KjvJCQCRjX914zPcAdQ7Ic/Wireframes-de-Formularios?fullscreen=1)
