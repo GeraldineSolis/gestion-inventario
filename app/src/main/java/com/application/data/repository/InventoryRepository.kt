@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
+import java.util.Calendar
 
 class InventoryRepository(
     private val productoDao: ProductoDao,
@@ -205,6 +206,28 @@ class InventoryRepository(
     fun getComprasCount(): Flow<Int> = compraDao.getCount()
 
     fun getTotalGastado(): Flow<Double?> = compraDao.getTotalGastado()
+
+    fun getComprasDelDia(): Flow<List<Compra>> = flow {
+        val calendar = Calendar.getInstance()
+        // Establecer a las 00:00:00.000 del día actual
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val inicioDia = calendar.timeInMillis
+
+        // Establecer a las 23:59:59.999 del día actual
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
+        val finDia = calendar.timeInMillis
+
+        // Esta función llama a CompraDao.getByRangoFechas
+        compraDao.getByRangoFechas(inicioDia, finDia).collect { compras ->
+            emit(compras)
+        }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun insertCompra(compra: Compra): Resource<Long> = withContext(Dispatchers.IO) {
         try {
@@ -451,6 +474,25 @@ class InventoryRepository(
 
         } catch (e: Exception) {
             emit(Resource.Error("Error al obtener estadísticas: ${e.message}"))
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun getVentasDelDia(): Flow<List<Venta>> = flow {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val inicioDia = calendar.timeInMillis
+
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
+        val finDia = calendar.timeInMillis
+
+        ventaDao.getByRangoFechas(inicioDia, finDia).collect { ventas ->
+            emit(ventas)
         }
     }.flowOn(Dispatchers.IO)
 }

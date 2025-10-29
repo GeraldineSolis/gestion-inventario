@@ -18,11 +18,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.application.model.Producto
+import com.application.navigation.Screens
 import com.application.viewmodel.ProductViewModel
+
+data class CarritoItem(
+    val producto: Producto,
+    var cantidad: Int = 1
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductScreen(
+    navController: NavController = rememberNavController(),
     viewModel: ProductViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -33,7 +43,6 @@ fun ProductScreen(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        // Header de Búsqueda
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -60,7 +69,6 @@ fun ProductScreen(
             }
         }
 
-        // Barra de búsqueda
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,7 +103,6 @@ fun ProductScreen(
             )
         }
 
-        // MOSTRAR ESTADO DE CARGA
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier
@@ -111,7 +118,6 @@ fun ProductScreen(
             }
         }
 
-        // MOSTRAR ERRORES
         uiState.errorMessage?.let { error ->
             Card(
                 modifier = Modifier
@@ -139,7 +145,6 @@ fun ProductScreen(
             }
         }
 
-        // Título de sección con contador
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,7 +165,6 @@ fun ProductScreen(
             )
         }
 
-        // MENSAJE SI NO HAY PRODUCTOS
         if (!uiState.isLoading && uiState.productos.isEmpty()) {
             Column(
                 modifier = Modifier
@@ -200,7 +204,6 @@ fun ProductScreen(
                 }
             }
         } else {
-            // Lista de productos
             val filteredProducts = if (searchQuery.isBlank()) {
                 uiState.productos
             } else {
@@ -265,7 +268,9 @@ fun ProductScreen(
                             }
 
                             IconButton(
-                                onClick = { /* Acción */ },
+                                onClick = {
+                                    navController.navigate(Screens.ProductEntry.route)
+                                },
                                 modifier = Modifier
                                     .size(48.dp)
                                     .background(

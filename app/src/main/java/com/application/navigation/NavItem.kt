@@ -14,9 +14,9 @@ object NavItem {
 
     val items = listOf(
         Item(Screens.Home.route, "Dashboard", Icons.Default.Home),
+        Item(Screens.Productos.route, "Productos", Icons.Default.Backpack),
         Item(Screens.Ventas.route, "Ventas", Icons.Default.ShoppingCart),
-        Item(Screens.Productos.route, "Productos", Icons.Default.ShoppingCart),
-        Item(Screens.Gastos.route, "Gastos", Icons.Default.ShoppingCart),
-        Item(Screens.Cierre.route, "Cierre", Icons.Default.ShoppingCart)
+        Item(Screens.Gastos.route, "Gastos", Icons.Default.AttachMoney),
+        Item(Screens.Cierre.route, "Cierre", Icons.Default.FilePresent)
     )
 }

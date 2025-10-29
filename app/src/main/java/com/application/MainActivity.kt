@@ -18,7 +18,6 @@ import com.application.ui.AppHeaderWithNav
 import com.application.ui.CierreScreen
 import com.application.ui.GastosScreen
 import com.application.ui.HomeScreen
-import com.application.ui.ProductEntryScreen
 import com.application.ui.ProductScreen
 import com.application.ui.VentasScreen
 import com.application.ui.theme.AppTheme
@@ -53,13 +52,10 @@ fun AppNavigation() {
         ) {
 
             composable(Screens.Home.route) { HomeScreen() }
-            composable(Screens.Ventas.route) { VentasScreen() }
             composable(Screens.Productos.route) { ProductScreen() }
+            composable(Screens.Ventas.route) { VentasScreen() }
             composable(Screens.Gastos.route) { GastosScreen() }
             composable(Screens.Cierre.route) { CierreScreen() }
-
-            // Rutas Secundarias
-            composable(Screens.ProductEntry.route) { ProductEntryScreen() }
         }
     }
 }
