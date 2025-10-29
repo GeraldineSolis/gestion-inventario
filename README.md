@@ -8,42 +8,64 @@ Este proyecto tiene como objetivo desarrollar una aplicación móvil con Android
 
 ## 👥 Roles del Equipo y Enfoque Funcional
 
-| Rol | Estudiante | Enfoque Principal | Contribución en Figma (Día 1) |
-| :--- | :--- | :--- | :--- |
-| **Líder Técnico** | Geraldine Solis | **Arquitectura UX**, Persistencia de Datos (Room), Lógica de **Inventario y Compras/Gastos**. | **Diseño Estructural (Wireframes) de: Registro de Producto y Compras/Insumos.** |
-| **Diseñador UI** | Travezaño Sayuri | Interfaz de Usuario (**UI**), Componentes Visuales (**Design System**), Flujo de **Ventas y Reportes**. | **Diseño Visual (Alta Fidelidad) y Estructura de: Home, Ventas y Cierre de Caja/Reportes.** |
+| Rol | Estudiante | Enfoque Principal | Contribución en Figma (Día 1) | 
+ | ----- | ----- | ----- | ----- | 
+| **Líder Técnico** | Geraldine Solis | **Arquitectura UX**, Persistencia de Datos (Room), Lógica de **Inventario y Compras/Gastos**. | **Diseño Estructural (Wireframes) de: Registro de Producto y Compras/Insumos.** | 
+| **Diseñador UI** | Travezaño Sayuri | Interfaz de Usuario (**UI**), Componentes Visuales (**Design System**), Flujo de **Ventas y Reportes**. | **Diseño Visual (Alta Fidelidad) y Estructura de: Home, Ventas y Cierre de Caja/Reportes.** | 
 
 ---
 
-## 🎨 Prototipo Visual (Día 1 - Figma)
+## III. Avance Consolidado: Arquitectura de Datos (Días 3 al 6)
 
-El diseño del prototipo visual ha sido completado en Figma para definir el alcance y el flujo de usuario inicial.
+Como Líder Técnico, se ha implementado la arquitectura de datos completa (**Clean Architecture** y **MVVM**) con un enfoque **Offline-First**, asegurando la robustez de la aplicación y su preparación para la conexión con un *backend* real.
 
-### 🛠️ Enfoque del Líder Técnico (UX y Estructura)
+### A. Persistencia, ViewModel y Lógica Base (Días 3-5)
 
-Como **Líder Técnico**, mi contribución inicial se centró en la **Usabilidad (UX)** y la **Arquitectura de la Información** de las secciones críticas de gestión de datos:
+* **Room/Persistencia:** Implementación del patrón Singleton para `AppDatabase`, con **DAOs** para `Producto` y `Compra` que exponen los datos mediante **`Flow`**.
+* **Capas:** Creación de `InventoryRepository.kt` y ViewModels (`ProductViewModel`, `PurchaseViewModel`) usando **`StateFlow`** para la gestión del estado de la UI.
+* **Integración de Red:** Implementación de Retrofit (`InventarioApiService.kt`) y configuración del `NetworkModule.kt` para la comunicación con el servidor (vía Mock API).
+* **Stock Reactivo:** Implementación de la lógica de negocio para que `insertCompra` **SUME** automáticamente el stock del producto, asegurando la consistencia de los datos en tiempo real.
 
-* **Registro de Productos:** Se definió un *wireframe* simple y funcional que prioriza la eficiencia en la entrada de datos (nombre, precio, stock) y la accesibilidad al escaneo.
-* **Compras/Insumos:** Se estructuró el formulario para registrar egresos de dinero, asegurando la distinción entre gastos operativos y reabastecimiento de stock.
+### B. Sistema de Sincronización Pendiente
 
-*(El diseño final de alta fidelidad y el sistema de colores se construirán sobre esta base, a cargo del Diseñador UI).*
-
-**🔗 Enlace al Prototipo en Figma:**
-https://www.figma.com/make/KjvJCQCRjX914zPcAdQ7Ic/Wireframes-de-Formularios?node-id=0-4&t=7Y180olK7AYdMqd6-1
----
-
-## ⚙️ Estructura de Trabajo y Ramas de GitHub
-
-El trabajo se dividirá en ramas funcionales para permitir el desarrollo en paralelo y minimizar dependencias.
-
-| Rama | Propósito | Responsable |
-| :--- | :--- | :--- |
-| `main` | Versión estable y consolidada del proyecto. | **Ambos** (Merge de *features*) |
-| `feature/inventory-and-costs` | Implementación de las funcionalidades de **Inventario, Productos y Compras/Gastos**. | **Líder Técnico** |
-| `feature/sales-and-reports` | Implementación de las funcionalidades de **Registro de Ventas, Cierre de Caja y Reportes**. | **Diseñador UI** |
+* **Robustez:** Se implementó una lógica a prueba de fallos de red: si el intento de envío a la API falla (por `IOException` o `HttpException`), la operación se guarda en una cola local (`PendingSync.kt`) para ser reintentada posteriormente.
 
 ---
 
-## 🏁 Próximos Pasos (Día 2)
+## IV. Ventajas del Mock Implementado (Estrategia de Simulación)
 
-Comenzaremos la configuración del proyecto base en Android Studio, estableciendo la estructura de paquetes (`model`, `data`, `navigation`, `ui`) y la navegación inicial en nuestras respectivas ramas de funcionalidad.
+Para demostrar las capacidades de sincronización y estados de carga de Retrofit sin depender de un servidor activo, se utilizó un servicio de *mocking* externo con las siguientes ventajas:
+
+* ✅ **Datos simulados** basados en productos comunes para una mejor simulación.
+* ✅ **Latencia simulada** (300-800ms) para probar correctamente los estados de carga (`isLoading`).
+* ✅ **IDs autoincrementables** para simular operaciones CRUD completas.
+* ✅ **Stock bajo realista** para probar la lógica de alertas.
+* ✅ **Historial de compras** con fechas variadas para las estadísticas.
+* ✅ **Actualización automática de stock** al registrar compras (simulación de *triggers* de la API).
+* ✅ **Fácil *switch* a API real** cambiando solo la URL base en `NetworkModule.kt`.
+
+---
+
+## V. Avance Consolidado: Business Intelligence (Día 6)
+
+El trabajo se centró en la implementación de la lógica de negocio avanzada dentro del Repositorio para generar las métricas ejecutivas clave que alimentarán el Dashboard.
+
+### 1. Métricas e Indicadores Clave
+
+Se implementaron las funciones necesarias en `InventoryRepository.kt` y `ProductoDao.kt` para la toma de decisiones:
+
+* **Alerta de Stock Bajo:** Lógica para identificar y contar todos los productos cuyo `stockActual` es menor o igual al `stockMinimo` definido.
+* **Cálculo de Ganancia Neta:** Función para obtener la diferencia entre el total de ventas y el costo total de los insumos (compras).
+* **Costo Total de Inventario:** Consulta para sumar el costo actual de todo el stock disponible en bodega.
+
+### 2. Preparación de la Interfaz
+
+* Se creó el modelo `DashboardStats.kt` (o similar) para consolidar todas estas métricas de rendimiento en un único objeto de estado, facilitando su consumo reactivo por parte del futuro `HomeViewModel.kt`.
+
+---
+
+## 🏁 Próximos Pasos (Día Final)
+
+Con toda la lógica de persistencia, red, sincronización y *Business Intelligence* completada por el Líder Técnico, el trabajo restante se centra en la integración final de la UI para cerrar el proyecto:
+
+* **Integración UI (Diseñador UI):** Consumir el `DashboardStats` y el estado de los ViewModels para construir las Tarjetas de Resumen en el `HomeScreen`, mostrando alertas de stock bajo y los resúmenes financieros calculados.
