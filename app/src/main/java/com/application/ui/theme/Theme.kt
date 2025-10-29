@@ -10,6 +10,10 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -32,6 +36,33 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
+
+object DesignTokens {
+    // Colors
+    val BluePrimary = Color(0xFF1E88E5)
+    val GreenSuccess = Color(0xFF2E7D32)
+    val OrangeWarning = Color(0xFFF57C00)
+    val AppBackground = Color(0xFFF5F7FA)
+    val Divider = Color(0xFFE8E8E8)
+    val TextSecondary = Color(0xFF6B7280)
+    val TextMuted = Color(0xFF9CA3AF)
+    val LowStockBackground = Color(0xFFFFF7E6)
+
+    // Sizes / Elevations
+    val CardRadius: Dp = 12.dp
+    val CardElevation: Dp = 2.dp
+    val FieldElevation: Dp = 1.dp
+
+    // Spacings
+    val SpacingSmall: Dp = 8.dp
+    val SpacingMedium: Dp = 12.dp
+    val SpacingLarge: Dp = 16.dp
+
+    // Typography sizes
+    val TitleLarge = 22.sp
+    val SectionTitle = 16.sp
+    val BodySmall = 12.sp
+}
 
 @Composable
 fun AppTheme(

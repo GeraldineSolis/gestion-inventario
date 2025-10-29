@@ -55,7 +55,7 @@ fun AppHeaderWithNav(navController: NavHostController, currentRoute: String) {
                         }
                     },
                     modifier = Modifier.padding(horizontal = 4.dp),
-                    colors = if (isSelected) ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
+                    colors = if (isSelected) ButtonDefaults.buttonColors(containerColor = item.selectedColor)
                     else ButtonDefaults.outlinedButtonColors()
                 ) {
                     Text(item.label, color = if (isSelected) Color.White else Color.Black)

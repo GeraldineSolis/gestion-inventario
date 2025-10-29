@@ -26,6 +26,7 @@ import com.application.data.repository.Resource
 import com.application.model.Producto
 import com.application.navigation.Screens
 import com.application.viewmodel.HomeViewModel
+import com.application.ui.theme.DesignTokens
 import java.text.NumberFormat
 import android.app.Application
 import androidx.compose.ui.platform.LocalContext
@@ -47,9 +48,9 @@ fun HomeScreen(navController: NavHostController) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF5F7FA))
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(DesignTokens.AppBackground)
+                .padding(horizontal = DesignTokens.SpacingLarge, vertical = DesignTokens.SpacingLarge),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.SpacingMedium)
         ) {
             item {
                 Text(
@@ -61,21 +62,21 @@ fun HomeScreen(navController: NavHostController) {
                 Text(
                     text = "Resumen de ventas y estado del inventario",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280)
+                    color = DesignTokens.TextSecondary
                 )
             }
 
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DesignTokens.SpacingMedium)
                 ) {
                     DashboardCard(
                         title = "Ventas del Día",
                         subtitle = cantidadHoy?.let { "$it productos vendidos" },
                         value = totalHoy?.let { currency.format(it) } ?: "...",
                         icon = Icons.Filled.AttachMoney,
-                        color = Color(0xFF1E88E5),
+                        color = DesignTokens.BluePrimary,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -88,7 +89,7 @@ fun HomeScreen(navController: NavHostController) {
                             is Resource.Loading -> "..."
                         },
                         icon = Icons.Filled.WarningAmber,
-                        color = Color(0xFFF57C00),
+                        color = DesignTokens.OrangeWarning,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -101,7 +102,7 @@ fun HomeScreen(navController: NavHostController) {
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DesignTokens.SpacingMedium)
                 ) {
                     ActionCard(
                         title = "Nueva Venta",
@@ -143,10 +144,10 @@ private fun DashboardCard(
         modifier = modifier
             .heightIn(min = 120.dp),
         colors = CardDefaults.cardColors(containerColor = color),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = DesignTokens.CardElevation),
+        shape = RoundedCornerShape(DesignTokens.CardRadius)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(DesignTokens.SpacingMedium)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -155,10 +156,10 @@ private fun DashboardCard(
                 Text(text = title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Icon(imageVector = icon, contentDescription = null, tint = Color.White.copy(alpha = 0.9f))
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(DesignTokens.SpacingSmall))
             Text(text = value, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             if (subtitle != null) {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(DesignTokens.SpacingSmall))
                 Text(text = subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
             }
         }
@@ -168,32 +169,32 @@ private fun DashboardCard(
 @Composable
 private fun LowStockSection(itemsLow: List<Producto>) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = DesignTokens.LowStockBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = DesignTokens.CardElevation),
+        shape = RoundedCornerShape(DesignTokens.CardRadius)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = DesignTokens.SpacingLarge, vertical = DesignTokens.SpacingMedium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.WarningAmber, contentDescription = null, tint = Color(0xFFF57C00))
-                Spacer(Modifier.width(8.dp))
-                Text("Productos que Requieren Reabastecimiento", color = Color(0xFF8A6D3B), fontWeight = FontWeight.Medium)
+                Icon(Icons.Filled.WarningAmber, contentDescription = null, tint = DesignTokens.OrangeWarning)
+                Spacer(Modifier.width(DesignTokens.SpacingSmall))
+                Text("Productos que Requieren Reabastecimiento", color = DesignTokens.TextSecondary, fontWeight = FontWeight.Medium)
             }
-            Divider(color = Color(0xFFE8E8E8))
+            Divider(color = DesignTokens.Divider)
             if (itemsLow.isEmpty()) {
                 Text(
                     text = "Sin alertas de stock",
-                    modifier = Modifier.padding(16.dp),
-                    color = Color(0xFF6B7280)
+                    modifier = Modifier.padding(DesignTokens.SpacingLarge),
+                    color = DesignTokens.TextSecondary
                 )
             } else {
                 itemsLow.forEach { producto ->
                     LowStockRow(producto)
-                    Divider(color = Color(0xFFE8E8E8))
+                    Divider(color = DesignTokens.Divider)
                 }
             }
         }
@@ -205,22 +206,22 @@ private fun LowStockRow(producto: Producto) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = DesignTokens.SpacingLarge, vertical = DesignTokens.SpacingMedium),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(Modifier.weight(1f)) {
             Text(producto.nombre, fontWeight = FontWeight.SemiBold)
-            Text("Stock mínimo: ${producto.stockMinimo} unidades", color = Color(0xFF6B7280), fontSize = 12.sp)
+            Text("Stock mínimo: ${producto.stockMinimo} unidades", color = DesignTokens.TextSecondary, fontSize = 12.sp)
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text("Stock actual", color = Color(0xFF6B7280), fontSize = 12.sp)
+            Text("Stock actual", color = DesignTokens.TextSecondary, fontSize = 12.sp)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("${producto.stockActual}")
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(DesignTokens.SpacingSmall))
                 AssistChip(
                     onClick = {},
                     label = { Text("Bajo") },
-                    colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFFFFE4D6))
+                    colors = AssistChipDefaults.assistChipColors(containerColor = DesignTokens.LowStockBackground)
                 )
             }
         }
@@ -239,13 +240,13 @@ private fun ActionCard(
         onClick = onClick,
         modifier = modifier.height(110.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = DesignTokens.CardElevation),
+        shape = RoundedCornerShape(DesignTokens.CardRadius)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(DesignTokens.SpacingMedium),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

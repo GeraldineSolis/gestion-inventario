@@ -31,10 +31,7 @@ class InventoryRepository(
     fun getAllProductos(): Flow<Resource<List<Producto>>> = flow {
         emit(Resource.Loading())
 
-        productoDao.getAll().collect { localProductos ->
-            emit(Resource.Success(localProductos))
-        }
-
+        // 1) Intentar refrescar desde API/mock primero
         try {
             val response = apiService.getAllProductos()
             if (response.isSuccessful && response.body()?.success == true) {
@@ -44,7 +41,13 @@ class InventoryRepository(
                 }
             }
         } catch (e: Exception) {
+            // No interrumpir el flujo: mostramos error pero continuamos emitiendo datos locales
             emit(Resource.Error("Error de red: ${e.message}"))
+        }
+
+        // 2) Emitir continuamente los datos locales actualizados
+        productoDao.getAll().collect { localProductos ->
+            emit(Resource.Success(localProductos))
         }
     }.flowOn(Dispatchers.IO)
 
