@@ -54,7 +54,7 @@ fun AppNavigation() {
 
             composable(Screens.Home.route) { HomeScreen(navController) }
             composable(Screens.Ventas.route) { VentasScreen() }
-            composable(Screens.Productos.route) { ProductScreen() }
+            composable(Screens.Productos.route) { ProductEntryScreen() }
             composable(Screens.Gastos.route) { GastosScreen() }
             composable(Screens.Cierre.route) { CierreScreen() }
 
